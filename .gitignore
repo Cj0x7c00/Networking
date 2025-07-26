@@ -1,0 +1,7 @@
+# compilation
+*.o
+*/bin
+*/bin-int
+
+# premake generated files
+Makefile
