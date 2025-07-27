@@ -47,10 +47,10 @@ namespace netblt
         #endif
     }
 
-    void BindSocket(Socket& _socket)
+    void BindSocket(Socket& _socket, Port _port)
     {
         #ifdef NETBLT_PLATFORM_MACOS
-        MacOS_BindSocket(_socket);
+        MacOS_BindSocket(_socket, _port);
         #else
         // For other platforms, you can implement similar functions or return an error
         // No-op for now
@@ -64,6 +64,20 @@ namespace netblt
         #else
         // For other platforms, you can implement similar functions or return an error
         // No-op for now
+        #endif
+    }
+
+    void SendData(Socket& _socket, std::string& _data)
+    {
+        #ifdef NETBLT_PLATFORM_MACOS
+        MacOS_SendData(_socket, _data);
+        #endif
+    }
+
+    void ReceiveData(Socket& _socket, std::string& _data)
+    {
+        #ifdef NETBLT_PLATFORM_MACOS
+        MacOS_ReceiveData(_socket, _data);
         #endif
     }
 
@@ -97,7 +111,7 @@ namespace netblt
         ClientSocket client;
         client.len = sizeof(client.ip);
 
-        BindSocket(m_Socket);
+        BindSocket(m_Socket, m_Port);
         Listen(m_Socket);
         AcceptConnection(m_Socket, client);
         

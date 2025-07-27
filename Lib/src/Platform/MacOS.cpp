@@ -41,27 +41,30 @@ namespace netblt
 
     bool MacOS_Connect(Socket& _clientSocket, IP _serverIp, Port _port)
     {
-        
         SAddrIn server_addr;
         memset(&server_addr, 0, sizeof(server_addr));  
         server_addr.sin_family = AF_INET;
-        server_addr.sin_port = htons ( _port );
+        server_addr.sin_port = htons(_port);
 
-        // Connect to the server
-        if (connect(_clientSocket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-            std::cerr << "Error connecting to server: " << strerror(errno) << std::endl;
-            return false; // Error connecting to server
+        if (inet_pton(AF_INET, _serverIp, &server_addr.sin_addr) <= 0) {
+            std::cerr << "Invalid server IP address: " << _serverIp << std::endl;
+            return false;
         }
 
-        return true; // Successfully connected to the server
+        if (connect(_clientSocket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+            std::cerr << "Error connecting to server: " << strerror(errno) << std::endl;
+            return false;
+        }
+
+        return true;
     }
 
-    void MacOS_BindSocket(Socket& _socket)
+    void MacOS_BindSocket(Socket& _socket, Port _port)
     {
         SAddrIn srv_addr;
         memset(&srv_addr, 0, sizeof(srv_addr));
         srv_addr.sin_family = AF_INET;
-        srv_addr.sin_port = htons(_socket); // Use the socket as the port for binding
+        srv_addr.sin_port = htons(_port); // Use the provided port for binding
         srv_addr.sin_addr.s_addr = htonl(INADDR_ANY); // Bind to any available address
 
         if (bind(_socket, (struct sockaddr*)&srv_addr, sizeof(srv_addr)) < 0) {
@@ -78,6 +81,28 @@ namespace netblt
             std::cerr << "Error listening on socket: " << strerror(errno) << std::endl;
             close(_socket);
             _socket = -1; // Set to -1 to indicate an error
+        }
+    }
+
+    void MacOS_SendData(Socket& _socket, std::string& _data)
+    {
+        ssize_t bytes_sent = send(_socket, _data.c_str(), _data.size(), 0);
+        if (bytes_sent < 0) {
+            std::cerr << "Error sending data: " << strerror(errno) << std::endl;
+        }
+    }
+
+    void MacOS_ReceiveData(Socket& _socket, std::string& _data)
+    {
+        char buffer[1024];
+        ssize_t bytes_received = recv(_socket, buffer, sizeof(buffer) - 1, 0);
+        if (bytes_received < 0) {
+            std::cerr << "Error receiving data: " << strerror(errno) << std::endl;
+        } else if (bytes_received == 0) {
+            std::cerr << "Connection closed by peer." << std::endl;
+        } else {
+            buffer[bytes_received] = '\0'; // Null-terminate the received data
+            _data.assign(buffer, bytes_received);
         }
     }
 

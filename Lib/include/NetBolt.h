@@ -20,9 +20,13 @@ namespace netblt
         // Function to connect a client socket to a server IP
         bool MacOS_Connect(Socket& _clientSocket, IP _serverIp, Port _port);
 
-        void MacOS_BindSocket(Socket& _socket);
+        void MacOS_BindSocket(Socket& _socket, Port _port);
 
         void MacOS_Listen(Socket& _socket);
+
+        void MacOS_SendData(Socket& _socket, std::string& _data);
+        
+        void MacOS_ReceiveData(Socket& _socket, std::string& _data);
 
     #endif
     
@@ -41,6 +45,9 @@ namespace netblt
 
     void BindSocket(Socket& _socket);
     void Listen(Socket& _socket);
+
+    void SendData(Socket& _socket, std::string& _data);
+    void ReceiveData(Socket& _socket, std::string& _data);
 
     // SERVER
     class TCPServer

@@ -25,7 +25,7 @@ int match(const char* str) {
 struct TestInfo
 {
     netblt::IP ip;
-    netblt::IP serverIp = "192.168.2.10";
+    netblt::IP serverIp = "0.0.0.0";
     netblt::Port port;
     netblt::TCPServer* server = nullptr;
 };
@@ -38,9 +38,26 @@ void MakeClient(TestInfo& testInfo) {
         std::cout << "Created socket on port " << testInfo.port << " with IP " << testInfo.ip << std::endl;
     }
 
-    if (netblt::Connect(socket, testInfo.serverIp, 8080))
+    if (netblt::Connect(socket, testInfo.serverIp, 8084))
     {
-        std::cout << "Client Connected!\n";
+        std::cout << "Server Connected!\n";
+
+        while (true) {
+            std::string data;
+            std::cout << "send>> ";
+            std::getline(std::cin, data);
+            if (data == "exit") {
+                break; // Exit the loop if 'exit' is entered
+            }
+            netblt::SendData(socket, data);
+            
+            data = "";
+
+            netblt::ReceiveData(socket, data);
+            if (!data.empty()) {
+                std::cout << "recv>> "<< data << std::endl;
+            }  
+        }
     }
     
     netblt::CloseSocket(socket);
@@ -53,10 +70,34 @@ void MakeServer(TestInfo& testInfo) {
     testInfo.server->OnClientConnected([](netblt::ClientSocket& client) {
         std::cout << "Client connected!" << std::endl;
         std::cout << "Client IP: " << netblt::InetToString(client.ip) << std::endl;
+
+        while (true) {
+            std::string data;
+            netblt::ReceiveData(client.socket, data);
+            if (data.empty()) {
+                std::cout << "Client disconnected." << std::endl;
+                break; // Exit the loop if no data is received
+            }
+            std::cout << "Received data: " << data << std::endl;
+
+            if (data == "Hello, Server!") {
+                std::string response = "Hello, Client!";
+                netblt::SendData(client.socket, response);
+                std::cout << "Sent response: " << response << std::endl;
+            } else {
+                if (data == "exit") {
+                    std::cout << "Client requested exit." << std::endl;
+                    break; // Exit the loop if 'exit' is received
+                } else {
+                    netblt::SendData(client.socket, data);
+                    std::cout << "..." << data << std::endl;
+                }
+            }
+        }
+
     });
 
     testInfo.server->Start();
-    std::cout << "Server started on port " << testInfo.port << " with IP " << testInfo.ip << std::endl;
 }
 
 
