@@ -9,6 +9,7 @@ project "NetBoltLib"
 
     files {
         "src/**.cpp",
+        "src/Platform/**.cpp",
         "include/**.h"
     }
 

@@ -5,3 +5,4 @@
 
 # premake generated files
 Makefile
+.vscode/settings.json
