@@ -15,6 +15,5 @@
         #include <string.h>         // For memset()
         #include <errno.h>          // For errno
         #define NETBLT_PLATFORM_MACOS
-
     #endif
 #endif

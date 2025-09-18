@@ -1,143 +1,64 @@
-#include <iostream>
 #include "NetBolt.h"
+#include <cassert>
+#include <iostream>
+#include <string>
+#include <thread>
+#include <assert.h>
 
-enum ARGS {
-    CLIENT,
-    SERVER,
-    IP,
-    PORT
-};
+void test_socket_creation() {
+    netblt::IP ip = "127.0.0.1";
+    netblt::Port port = 8080;
 
-int match(const char* str) {
-    if (strcmp(str, "-client") == 0 || strcmp(str, "-c") == 0) {
-        return CLIENT;
-    } else if (strcmp(str, "-server") == 0 || strcmp(str, "-s") == 0) {
-        return SERVER;
-    } else if (strcmp(str, "-ip") == 0){
-        return IP;
-    } else if (strcmp(str, "-p") == 0) {
-        return PORT;
-    }
-    return -1;
+    netblt::Socket sock = netblt::CreateSocket(port, netblt::SocketType::NETBLT_SOCK_STREAM, ip);
+    assert(sock > 0 && "Socket creation failed");
+
+    netblt::CloseSocket(sock);
 }
 
-
-struct TestInfo
+void run_srv()
 {
-    netblt::IP ip;
-    netblt::IP serverIp = "0.0.0.0";
-    netblt::Port port;
-    netblt::TCPServer* server = nullptr;
-};
+    netblt::IP ip = "192.168.0.1";     // listen on all interfaces
+    netblt::Port port = 8080;
+    netblt::TCPServer server(port, ip);
 
-void MakeClient(TestInfo& testInfo) {
-
-    netblt::Socket socket = netblt::CreateSocket(testInfo.port, netblt::SocketType::NETBLT_SOCK_STREAM, testInfo.ip);
-
-    if (socket > 0) {
-        std::cout << "Created socket on port " << testInfo.port << " with IP " << testInfo.ip << std::endl;
-    }
-
-    if (netblt::Connect(socket, testInfo.serverIp, 8084))
-    {
-        std::cout << "Server Connected!\n";
-
-        while (true) {
-            std::string data;
-            std::cout << "send>> ";
-            std::getline(std::cin, data);
-            if (data == "exit") {
-                break; // Exit the loop if 'exit' is entered
-            }
-            netblt::SendData(socket, data);
-            
-            data = "";
-
-            netblt::ReceiveData(socket, data);
-            if (!data.empty()) {
-                std::cout << "recv>> "<< data << std::endl;
-            }  
-        }
-    }
-    
-    netblt::CloseSocket(socket);
-}
-
-
-void MakeServer(TestInfo& testInfo) {
-    testInfo.server = new netblt::TCPServer(testInfo.port, testInfo.ip);
-
-    testInfo.server->OnClientConnected([](netblt::ClientSocket& client) {
-        std::cout << "Client connected!" << std::endl;
-        std::cout << "Client IP: " << netblt::InetToString(client.ip) << std::endl;
-
-        while (true) {
-            std::string data;
-            netblt::ReceiveData(client.socket, data);
-            if (data.empty()) {
-                std::cout << "Client disconnected." << std::endl;
-                break; // Exit the loop if no data is received
-            }
-            std::cout << "Received data: " << data << std::endl;
-
-            if (data == "Hello, Server!") {
-                std::string response = "Hello, Client!";
-                netblt::SendData(client.socket, response);
-                std::cout << "Sent response: " << response << std::endl;
-            } else {
-                if (data == "exit") {
-                    std::cout << "Client requested exit." << std::endl;
-                    break; // Exit the loop if 'exit' is received
-                } else {
-                    netblt::SendData(client.socket, data);
-                    std::cout << "..." << data << std::endl;
-                }
-            }
-        }
-
+    // Requires OnClientConnected to take std::function<void(ClientSocket&)>
+    server.OnClientConnected([&server](netblt::ClientSocket& sock){
+        std::cout << "test client connected: "
+                  << netblt::InetToString(sock.ip) << '\n';
+        // Prefer to signal stop asynchronously if Stop() blocks the accept thread
+        server.Stop();
     });
 
-    testInfo.server->Start();
+    server.Start();  // blocks until Stop()
+}
+
+void test_server_binding_and_listen()
+{
+    // Start server
+    std::thread srv_thread(run_srv);
+
+    // let the srv start
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+    // Create client and connect to localhost 
+    netblt::IP ip = "127.0.0.1";
+    netblt::Port local_port = 0; // let OS pick an ephemeral port
+    netblt::Socket client = netblt::CreateSocket(local_port, netblt::NETBLT_SOCK_STREAM, ip);
+
+    // Connect to the server's listening endpoint
+    netblt::Connect(client, "127.0.0.1", 8080);
+
+    srv_thread.join();
 }
 
 
-int main(int argc, char* argv[]) {
 
-    TestInfo testInfo;
+int main() {
+    test_socket_creation();
+    std::cout << "[PASS] test_socket_creation" << std::endl;
 
-    for (int i = 0; i < argc; ++i) {
-        switch (match(argv[i]))  // Example of using a switch statement
-        {
-        case CLIENT:
-            MakeClient(testInfo); 
-            break;
-
-        case SERVER:
-            MakeServer(testInfo);
-            break;
-
-        case IP:
-            if (i + 1 < argc) { // Check if there is an argument after "-ip"
-                testInfo.ip = argv[i + 1]; // Assign the next argument as the IP
-            } else {
-                std::cerr << "Error: No IP address provided after -ip option." << std::endl;
-                return 1; // Exit with an error code
-            }
-            break;
-
-        case PORT:
-            if (i + 1 < argc) { // Check if there is an argument after "-p"
-                testInfo.port = static_cast<netblt::Port>(std::stoi(argv[i + 1])); // Convert the next argument to Port type
-            } else {
-                std::cerr << "Error: No port number provided after -p option." << std::endl;
-                return 1; // Exit with an error code
-            }
-            break;
-
-        default:
-            break;
-        }
-    }
+    test_server_binding_and_listen();
+    std::cout << "[PASS] test_server_binding_and_listen" << std::endl;
 
     return 0;
 }

@@ -24,9 +24,9 @@ namespace netblt
 
         void MacOS_Listen(Socket& _socket);
 
-        void MacOS_SendData(Socket& _socket, std::string& _data);
+        void MacOS_SendData(Socket& _socket, std::string _data);
         
-        void MacOS_ReceiveData(Socket& _socket, std::string& _data);
+        void MacOS_ReceiveData(Socket& _socket, std::string _data);
 
     #endif
     
@@ -46,13 +46,13 @@ namespace netblt
     void BindSocket(Socket& _socket);
     void Listen(Socket& _socket);
 
-    void SendData(Socket& _socket, std::string& _data);
-    void ReceiveData(Socket& _socket, std::string& _data);
+    void SendData(Socket& _socket, std::string _data);
+    void ReceiveData(Socket& _socket, std::string _data);
 
     // SERVER
     class TCPServer
     {
-        using ClientHandler = void (*)(ClientSocket&);
+        using ClientHandler = std::function<void(ClientSocket&)>;
 
     public:
         TCPServer(Port port, IP ip);
@@ -62,16 +62,20 @@ namespace netblt
         void OnClientConnected(ClientHandler handler);
         void Stop();
 
+        bool IsRunning() const { return m_IsRunning; }
+        bool IsValid() const { return (m_Socket >= 0 &&
+             m_Port > 0 && m_ClientHandler && m_IP != "\0"); }
+
     private:
         void handleClientConnection(ClientSocket& client);
         
     private:
         // Member variables
-        IP m_IP;
-        Port m_Port;
-        Socket m_Socket;
-        bool m_IsRunning;
-        ClientHandler m_ClientHandler;
+        IP m_IP = "\0";
+        Port m_Port = 0;
+        Socket m_Socket = -1;
+        bool m_IsRunning = false;
+        ClientHandler m_ClientHandler = nullptr;
     };
 
 } // namespace netblt

@@ -67,14 +67,14 @@ namespace netblt
         #endif
     }
 
-    void SendData(Socket& _socket, std::string& _data)
+    void SendData(Socket& _socket, std::string _data)
     {
         #ifdef NETBLT_PLATFORM_MACOS
         MacOS_SendData(_socket, _data);
         #endif
     }
 
-    void ReceiveData(Socket& _socket, std::string& _data)
+    void ReceiveData(Socket& _socket, std::string _data)
     {
         #ifdef NETBLT_PLATFORM_MACOS
         MacOS_ReceiveData(_socket, _data);
@@ -119,7 +119,7 @@ namespace netblt
 
     }
 
-    void TCPServer::OnClientConnected(void (*handler)(ClientSocket&))
+    void TCPServer::OnClientConnected(ClientHandler handler)
     {
         m_ClientHandler = handler;
     }

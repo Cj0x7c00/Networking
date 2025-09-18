@@ -84,7 +84,7 @@ namespace netblt
         }
     }
 
-    void MacOS_SendData(Socket& _socket, std::string& _data)
+    void MacOS_SendData(Socket& _socket, std::string _data)
     {
         ssize_t bytes_sent = send(_socket, _data.c_str(), _data.size(), 0);
         if (bytes_sent < 0) {
@@ -92,7 +92,7 @@ namespace netblt
         }
     }
 
-    void MacOS_ReceiveData(Socket& _socket, std::string& _data)
+    void MacOS_ReceiveData(Socket& _socket, std::string _data)
     {
         char buffer[1024];
         ssize_t bytes_received = recv(_socket, buffer, sizeof(buffer) - 1, 0);
