@@ -89,7 +89,7 @@ namespace netblt
         : m_Port(port), m_IP(ip), m_IsRunning(false)
     {
         if ((m_Socket = CreateSocket(port, SocketType::NETBLT_SOCK_STREAM, ip)) >= 0) {
-            std::cout << "TCPServer created on port " << port << " with IP " << ip << std::endl;
+            NB_INFO("TCPServer created on port %i with IP %s", port, ip);
         }
     }
 
@@ -105,7 +105,7 @@ namespace netblt
     void TCPServer::Start()
     {
         if (m_IsRunning) {
-            std::cerr << "Server is already running." << std::endl;
+            NB_ERROR("Server is already running");
         } else { m_IsRunning = true; }
 
         ClientSocket client;
@@ -129,14 +129,14 @@ namespace netblt
         if (m_ClientHandler) {
             m_ClientHandler(client);
         } else {
-            std::cerr << "No client handler set." << std::endl;
+            NB_ERROR("No client handler set.");
         }
     }
 
     void TCPServer::Stop()
     {
         if (!m_IsRunning) {
-            std::cerr << "Server is not running." << std::endl;
+            NB_ERROR("Server is not running");
             return;
         }
 
@@ -144,7 +144,7 @@ namespace netblt
 
         // Close the server socket
         CloseSocket(m_Socket);
-        std::cout << "TCPServer stopped." << std::endl;
+        NB_INFO("TCPServer stopped.");
     }
 
 } // namespace netblt

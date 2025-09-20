@@ -3,6 +3,8 @@
 #include "NetBoltTypes.h"
 #include "NetBoltPlatform.h"
 
+#include "Log/NetBoltLog.h"
+
 namespace netblt
 {
     // MacOS PROTOTYPES
@@ -64,7 +66,7 @@ namespace netblt
 
         bool IsRunning() const { return m_IsRunning; }
         bool IsValid() const { return (m_Socket >= 0 &&
-             m_Port > 0 && m_ClientHandler && m_IP != "\0"); }
+             m_Port > 0 && m_ClientHandler && strcmp(m_IP, "")); }
 
     private:
         void handleClientConnection(ClientSocket& client);

@@ -10,7 +10,9 @@ project "NetBoltLib"
     files {
         "src/**.cpp",
         "src/Platform/**.cpp",
-        "include/**.h"
+        "include/**.h",
+        "include/Log/**.h",
+        "include/Log/**.cpp"
     }
 
     includedirs {

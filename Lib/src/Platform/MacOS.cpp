@@ -11,7 +11,7 @@ namespace netblt
         // Create a socket
         int sockfd = socket(AF_INET, to_bsd_socket_type(_type), IPPROTO_TCP);
         if (sockfd < 0) {
-            std::cerr << "Error creating socket: " << strerror(errno) << std::endl;
+            NB_ERROR("Error creating socket: %s", strerror(errno));
             return -1; // Error creating socket
         }
 
@@ -30,9 +30,9 @@ namespace netblt
     {
         // Wait for a client to connect
         if ((_client.socket = accept(_serverSocket, (struct sockaddr*)&_client.ip, &_client.len)) < 0) {
-            std::cerr << "Error accepting client connection: " << strerror(errno) << std::endl;
+            NB_ERROR("Error accepting client connection: %s", strerror(errno));
             if (_serverSocket < 0) {
-                std::cerr << "- Make sure the server socket is valid and listening." << std::endl;
+                NB_INFO("\t- Make sure the server socket is valid and listening");
             }
             return; // Error accepting client connection
         }
@@ -47,12 +47,12 @@ namespace netblt
         server_addr.sin_port = htons(_port);
 
         if (inet_pton(AF_INET, _serverIp, &server_addr.sin_addr) <= 0) {
-            std::cerr << "Invalid server IP address: " << _serverIp << std::endl;
+            NB_ERROR("Invalid server IP address: %s", _serverIp);
             return false;
         }
 
         if (connect(_clientSocket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-            std::cerr << "Error connecting to server: " << strerror(errno) << std::endl;
+            NB_ERROR( "Error connecting to server: %s", strerror(errno));
             return false;
         }
 
@@ -68,8 +68,8 @@ namespace netblt
         srv_addr.sin_addr.s_addr = htonl(INADDR_ANY); // Bind to any available address
 
         if (bind(_socket, (struct sockaddr*)&srv_addr, sizeof(srv_addr)) < 0) {
-            std::cerr << "Error binding socket: " << strerror(errno) << std::endl;
-            std::cerr << "- Make sure the port is not already in use." << std::endl;
+            NB_ERROR("Error binding socket: %s", strerror(errno));
+            NB_INFO("\t- Make sure the port is not already in use"); 
             close(_socket);
             _socket = -1; // Set to -1 to indicate an error
         }
@@ -78,7 +78,7 @@ namespace netblt
     void MacOS_Listen(Socket& _socket)
     {
         if (listen(_socket, SOMAXCONN) < 0) {
-            std::cerr << "Error listening on socket: " << strerror(errno) << std::endl;
+            NB_ERROR("Error listening on socket: %s", strerror(errno));
             close(_socket);
             _socket = -1; // Set to -1 to indicate an error
         }
@@ -88,7 +88,7 @@ namespace netblt
     {
         ssize_t bytes_sent = send(_socket, _data.c_str(), _data.size(), 0);
         if (bytes_sent < 0) {
-            std::cerr << "Error sending data: " << strerror(errno) << std::endl;
+            NB_ERROR( "Error sending data: %s", strerror(errno));
         }
     }
 
@@ -97,9 +97,9 @@ namespace netblt
         char buffer[1024];
         ssize_t bytes_received = recv(_socket, buffer, sizeof(buffer) - 1, 0);
         if (bytes_received < 0) {
-            std::cerr << "Error receiving data: " << strerror(errno) << std::endl;
+            NB_ERROR("Error receiving data: %s", strerror(errno));
         } else if (bytes_received == 0) {
-            std::cerr << "Connection closed by peer." << std::endl;
+            NB_INFO("Connection closed by peer");
         } else {
             buffer[bytes_received] = '\0'; // Null-terminate the received data
             _data.assign(buffer, bytes_received);

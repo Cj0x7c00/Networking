@@ -10,21 +10,21 @@ void test_socket_creation() {
     netblt::Port port = 8080;
 
     netblt::Socket sock = netblt::CreateSocket(port, netblt::SocketType::NETBLT_SOCK_STREAM, ip);
-    assert(sock > 0 && "Socket creation failed");
+    if (!(sock > 0))
+        NB_FATAL("==> FAIL");
 
     netblt::CloseSocket(sock);
 }
 
 void run_srv()
 {
-    netblt::IP ip = "192.168.0.1";     // listen on all interfaces
-    netblt::Port port = 8080;
+    netblt::IP ip = "192.168.0.1";     
+    netblt::Port port = 8081;
     netblt::TCPServer server(port, ip);
 
     // Requires OnClientConnected to take std::function<void(ClientSocket&)>
     server.OnClientConnected([&server](netblt::ClientSocket& sock){
-        std::cout << "test client connected: "
-                  << netblt::InetToString(sock.ip) << '\n';
+        NB_INFO("test client connected: %s", netblt::InetToString(sock.ip));
         // Prefer to signal stop asynchronously if Stop() blocks the accept thread
         server.Stop();
     });
@@ -46,19 +46,25 @@ void test_server_binding_and_listen()
     netblt::Socket client = netblt::CreateSocket(local_port, netblt::NETBLT_SOCK_STREAM, ip);
 
     // Connect to the server's listening endpoint
-    netblt::Connect(client, "127.0.0.1", 8080);
-
+    if (!netblt::Connect(client, "127.0.0.1", 8081))
+    {
+        srv_thread.join();
+        NB_FATAL("== TERMINATING ==");
+    }
+    
     srv_thread.join();
 }
 
 
 
 int main() {
+    NB_DEBUG("== TESTING | SOCKET CREATION ==");
     test_socket_creation();
-    std::cout << "[PASS] test_socket_creation" << std::endl;
+    NB_DEBUG("==> [PASS] \n");
 
+    NB_DEBUG("== TESTING | TCP SRV ==");
     test_server_binding_and_listen();
-    std::cout << "[PASS] test_server_binding_and_listen" << std::endl;
+    NB_DEBUG("==> [PASS] \n");
 
     return 0;
 }
