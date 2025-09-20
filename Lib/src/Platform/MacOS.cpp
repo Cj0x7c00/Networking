@@ -92,7 +92,7 @@ namespace netblt
         }
     }
 
-    void MacOS_ReceiveData(Socket& _socket, std::string _data)
+    void MacOS_ReceiveData(Socket& _socket, std::string& _data)
     {
         char buffer[1024];
         ssize_t bytes_received = recv(_socket, buffer, sizeof(buffer) - 1, 0);

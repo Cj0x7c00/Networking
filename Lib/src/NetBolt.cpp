@@ -74,7 +74,7 @@ namespace netblt
         #endif
     }
 
-    void ReceiveData(Socket& _socket, std::string _data)
+    void ReceiveData(Socket& _socket, std::string& _data)
     {
         #ifdef NETBLT_PLATFORM_MACOS
         MacOS_ReceiveData(_socket, _data);

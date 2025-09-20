@@ -25,7 +25,21 @@ void run_srv()
     // Requires OnClientConnected to take std::function<void(ClientSocket&)>
     server.OnClientConnected([&server](netblt::ClientSocket& sock){
         NB_INFO("test client connected: %s", netblt::InetToString(sock.ip));
-        // Prefer to signal stop asynchronously if Stop() blocks the accept thread
+
+        for (int i=0; i < 1000; i++)
+        {
+            std::string data = "";
+            netblt::ReceiveData(sock.socket, data);
+
+            if (data != "")
+            {
+                NB_DEBUG("Recieved Data: %s", data.c_str());
+                netblt::SendData(sock.socket, "Hello, World!");
+                break;
+            }
+        }
+
+        // TODO: Prefer to signal stop asynchronously if Stop() blocks the accept thread
         server.Stop();
     });
 
@@ -51,7 +65,12 @@ void test_server_binding_and_listen()
         srv_thread.join();
         NB_FATAL("== TERMINATING ==");
     }
-    
+
+    netblt::SendData(client, "GET /hello_world");
+    std::string data = "";
+    netblt::ReceiveData(client, data);
+    NB_DEBUG("== SRV> %s", data.c_str());
+
     srv_thread.join();
 }
 

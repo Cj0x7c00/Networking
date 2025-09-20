@@ -28,7 +28,7 @@ namespace netblt
 
         void MacOS_SendData(Socket& _socket, std::string _data);
         
-        void MacOS_ReceiveData(Socket& _socket, std::string _data);
+        void MacOS_ReceiveData(Socket& _socket, std::string& _data);
 
     #endif
     
@@ -49,7 +49,7 @@ namespace netblt
     void Listen(Socket& _socket);
 
     void SendData(Socket& _socket, std::string _data);
-    void ReceiveData(Socket& _socket, std::string _data);
+    void ReceiveData(Socket& _socket, std::string& _data);
 
     // SERVER
     class TCPServer
